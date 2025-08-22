@@ -1,5 +1,7 @@
 let cefrLists = {};
 const levels = ["A1","A2","B1","B2","C1","C2"];
+let bookWords = [];  // all words in book
+let firstPageText = "";
 
 // Load CEFR lists
 async function loadCEFR() {
@@ -48,14 +50,63 @@ async function getDefinition(word) {
   }
 }
 
+// PDF.js helper
+async function loadPDF(file) {
+  const fileReader = new FileReader();
+  return new Promise((resolve) => {
+    fileReader.onload = async function() {
+      const typedArray = new Uint8Array(this.result);
+      const pdf = await pdfjsLib.getDocument(typedArray).promise;
+      let textContent = "";
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const text = await page.getTextContent();
+        const pageText = text.items.map(t => t.str).join(" ");
+        if (pageNum === 1) {
+          firstPageText = pageText;
+          document.getElementById("page-text").innerText = pageText;
+        }
+        textContent += " " + pageText;
+      }
+      resolve(textContent);
+    };
+    fileReader.readAsArrayBuffer(file);
+  });
+}
+
+// Tokenize text into words
+function tokenize(text) {
+  return text
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .filter(Boolean);
+}
+
+// Handle PDF upload
+document.getElementById("pdf-upload").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await loadPDF(file);
+  bookWords = tokenize(text);
+});
+
+// Handle Sherlock sample
+document.getElementById("sample-btn").addEventListener("click", async () => {
+  const res = await fetch("sherlock.pdf");
+  const blob = await res.blob();
+  const text = await loadPDF(blob);
+  bookWords = tokenize(text);
+});
+
 // Handle analysis
 document.getElementById("analyze-btn").addEventListener("click", async () => {
   const inputWords = document.getElementById("unknown-input").value.split(/\s+/).filter(Boolean);
-  
-  // TODO: extract words from PDF text (for now simple demo list)
-  let allWords = ["restart","tsunami","although","despite","freedom","obscure","vicinity","perplexed"];
-  
-  let predicted = predictUnknown(inputWords, allWords);
+  if (bookWords.length === 0) {
+    alert("Please upload a PDF or load Sherlock Holmes sample first!");
+    return;
+  }
+
+  let predicted = predictUnknown(inputWords, bookWords);
 
   let output = "Predicted 'Probably Unknown' Words:\n\n";
   for (let [word, lvl] of Object.entries(predicted)) {
@@ -63,9 +114,4 @@ document.getElementById("analyze-btn").addEventListener("click", async () => {
     output += `${def} [${lvl}]\n`;
   }
   document.getElementById("result").innerText = output;
-});
-
-// TODO: Hook PDF.js to read actual PDF text
-document.getElementById("sample-btn").addEventListener("click", () => {
-  alert("Sherlock Holmes sample PDF would load here!");
 });
