@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CEFR Vocabulary Predictor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>📚 CEFR Vocabulary Predictor</h1>
+
+  <div class="upload-box">
+    <p>Upload your own PDF or try Sherlock Holmes sample:</p>
+    <input type="file" id="pdf-upload" accept="application/pdf">
+    <button id="sample-btn">Use Sherlock Holmes Sample</button>
+  </div>
+
+  <div class="step">
+    <h2>Step 1: Enter unknown words from page 1</h2>
+    <textarea id="unknown-input" placeholder="Type words separated by spaces..."></textarea>
+    <button id="analyze-btn">Analyze</button>
+  </div>
+
+  <div class="step">
+    <h2>Step 2: Predicted Unknown Words</h2>
+    <div id="result"></div>
+  </div>
+
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
